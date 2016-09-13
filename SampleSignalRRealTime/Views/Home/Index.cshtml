@@ -1,0 +1,316 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}﻿
+<style>
+    html, body, #map_canvas {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        top:0;
+    }
+
+    .infoDiv {
+        height: 100px;
+        width: 200px;
+        -webkit-user-select: none;
+        background-color: white;
+    }
+
+    #map_canvas {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 0;
+        top:0;
+    }
+
+    #hitCount {
+        background-color: black;
+        opacity: 0.5;
+        filter: alpha(opacity=50); /* For IE8 and earlier */
+        color: white;
+        position:absolute;
+        height: auto;
+        z-index: 10;
+        text-align: center;
+        width: 200px;
+        padding: 0.5em;
+        font-size: 9pt;
+        left:5px;
+        top:5px;
+    }
+</style>
+<div id="hitCount" draggable="true">0</div>
+<div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog container">
+        <div class="modal-content ">
+            <form role="form" name="newUserForm" id="newUserForm" onsubmit="return checkUser();">
+                <div class="modal-body black-font ">
+                    <div class="modal-body-form form-div form-signin ">
+                        <div class="form-group container">
+                            <h4 class="form-signin-heading"><span id="spmsg">To show your identity please provide..</span></h4>
+                            <input type="text" class="form-control top-buffer-sm " placeholder="Username" name="username" required autofocus />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="createUserSubmit" type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div id="map_canvas"></div>
+<!-- Enclose the Javascript in a "section" so that it is rendered in the correct order after scripts have been loaded etc -->
+@section scripts 
+{
+<script src="http://maps.google.com/maps/api/js?key=AIzaSyB-ZtwCn8ACNp-vgzuh1vjuhmVCn4pPhy0" type="text/javascript"></script>
+<script type="text/javascript">
+            var con = $.hubConnection();
+            var hub = con.createHubProxy('SignalRRealTimeHub');
+
+            $(document).ready(function () {
+                $("#hitCount").toggle('hide');
+                $.Deferred(function () { con.start() }).done($("#myModal").modal('toggle'));
+
+            });
+
+            var ClientName = '';
+            var startPos;
+            var geoOptions = {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            }
+            var geoSuccess = function (position) {
+                startPos = position;
+            };
+            var geoError = function (error) {
+                console.log('Error occurred. Error code: ' + error.code);
+                // error.code can be:
+                //   0: unknown error
+                //   1: permission denied
+                //   2: position unavailable (error response from location provider)
+                //   3: timed out
+            };
+
+            var map;
+            var markers = [];
+            var CurrLatLng = null;
+            var totHitCount = 0;
+            var currZoom = 0;
+
+            var objMove = $('#hitCount');
+            objMove.draggable({
+                drag: function () {
+                    var self = $(this),
+                        x = this.offsetLeft,
+                        y = this.offsetTop;
+                    hub.invoke('MovePin', x, y);
+                }
+            });
+
+            hub.on('hitReceived', function (hitCount) {
+                //console.log('Client count received - ' + hitCount);
+                totHitCount = hitCount;
+                CreateMessage();
+            })  
+
+            hub.on('ZoomReceived', function (zoomVal) {
+                if (map != null) {
+                    if (currZoom != zoomVal.ZoomValue) {
+                        currZoom = zoomVal.ZoomValue;
+                        map.setZoom(zoomVal.ZoomValue);
+                    }
+                }
+            })
+
+            hub.on('MarkerReceived', function (data) {
+                //console.table(data);
+                //console.table(markers);
+                // Remove existing marker by received updated markers from server
+                var tobeDeleted = [];
+                $.each(markers, function (i, item) {
+                    var findval = data.map(function (obj) { return obj.MarkerId; }).indexOf(item.MarkerId);
+                    if (findval == -1) {
+                        (markers[i].Marker).setMap(null);
+                        tobeDeleted.push(i);
+                    }
+                });
+
+                if (tobeDeleted.length > 0) {
+                    $.each(tobeDeleted, function (i, item) {
+                        markers.splice(item, 1);
+                    })
+                }
+
+                // Add new markers by received updated markers from server
+                $.each(data, function (i, item) {
+                    var findval = markers.map(function (obj) { return obj.MarkerId; }).indexOf(item.MarkerId);
+                    if (findval == -1) {
+                        var marker = new google.maps.Marker({
+                            position: new google.maps.LatLng(item.Latitude, item.Longitude),
+                            label: item.MarkerId.toString(),
+                            title: item.Username,
+                            map: map
+                        });
+
+                        markers.push({
+                            BrowserClientId: item.BrowserClientId,
+                            MarkerId: item.MarkerId,
+                            Marker: marker,
+                            User: item.Username
+                        });
+
+                        var infowindow = new google.maps.InfoWindow({
+                            content: 'Pin #:' + item.MarkerId + ' <br/> Created by : ' + item.Username + ' <br/> <a href="#" onclick="DeleteMarkerClient(' + item.MarkerId + ')" >Delete Pin</a>'
+                        });
+
+                        marker.addListener('click', function () {
+                            infowindow.open(map, marker);
+                        });
+
+                        marker.setMap(map);
+                    }
+                });
+                CreateMessage();
+                //console.log('pin count received - ' + markers.length);
+            });
+
+            hub.on('pinMoved', function (x, y) {
+                //console.log('panel moved to - x:' + x + '  y:' + y);
+                objMove.css("left", x);
+                objMove.css("top", y);
+            })
+
+            function CreateMessage()
+            {
+                $('#hitCount').html('<h4>Hello ' + $("[name='username']").val() + '</h4> <br/>  <b>Total :</b>  Clients - ' + totHitCount + ', Pins - ' + markers.length);
+            }
+
+            function checkUser(callback)
+            {
+                $.get('/api/LocationData/' + $("[name='username']").val())
+                .done(function (exists) {
+                    var returnval = false;
+                    if (exists == "True") {
+                        $('#spmsg').text('User is already online, kindly enter another name..');
+                    }
+                    else {
+                        initMap();
+                    }
+                    callback = returnval;
+                });
+                return false;
+            }
+
+            function initMap() {
+                $("#myModal").modal('hide');
+                $("#hitCount").toggle();
+                navigator.geolocation.getCurrentPosition(function (geoSuccess) {
+                    CurrLatLng = new google.maps.LatLng(geoSuccess.coords.latitude, geoSuccess.coords.longitude);
+                    setMap(CurrLatLng);
+                    // Adds a marker at the center of the map.
+                    addMarkerClient(geoSuccess.coords.latitude, geoSuccess.coords.longitude);
+                }, geoError, geoOptions);
+
+                if (!CurrLatLng) {
+                    CurrLatLng = new google.maps.LatLng(40.785091, -73.968285);
+                    setMap(CurrLatLng);
+                }
+            }
+
+            function setMap(currLatLng)
+            {
+                map = new google.maps.Map(document.getElementById('map_canvas'), {
+                    zoom: 6,
+                    center: currLatLng,
+                    mapTypeId: 'roadmap',
+                    mapTypeControl: false
+                });
+
+                // This event listener will call addMarker() when the map is clicked.
+                map.addListener('click', function (event) {
+                    addMarkerClient(event.latLng.lat(), event.latLng.lng());
+
+                });
+
+                map.addListener('zoom_changed', function () {
+                    currZoom = map.getZoom();
+                    hub.invoke('UpdateOtherClientsZoom', { ZoomValue : currZoom });
+                });
+            }
+
+            // send updated zoom level to server and all clients
+            function updateZoomLevel(zoomval) {
+                //call webapi to pass map zoom level 
+                $.post("/api/locationdata/zoom", {
+                    ZoomValue : zoomval
+                });
+            }
+
+            // Adds a marker to the map and push to the array.
+            function addMarkerClient(markLat, markLong) {
+                //call webapi to pass browser's coordinates
+                $.post("/api/locationdata", {
+                    BrowserClientId: con.id,
+                    MarkerId: null,
+                    latitude: markLat,
+                    longitude: markLong,
+                    username: $("[name='username']").val()
+                });
+            }
+
+            // Adds a marker to the map and push to the array.
+            function DeleteMarkerClient(markerId) {
+                var arr = $.grep(markers, function (elem, i) {
+                    return elem.MarkerId == markerId;
+                })
+
+                $.each(arr, function (i, val) {
+                    //call webapi to pass browser's coordinates
+                    $.ajax({
+                        url: "/api/locationdata",
+                        type: 'DELETE',
+                        data:
+                                {
+                                    BrowserClientId: val.BrowserClientId,
+                                    Latitude: val.Marker.getPosition().lat(),
+                                    Longitude: val.Marker.getPosition().lng(),
+                                    MarkerId: val.MarkerId,
+                                    Username: val.User
+                                }
+                        ,
+                        success: function (response) {
+                            
+                        }
+                    });
+                })
+            }
+
+            // Sets the map on all markers in the array.
+            function setMapOnAll(map) {
+                for (var i = 0; i < markers.length; i++) {
+                    (markers[i].Marker).setMap(map);
+                }
+            }
+
+            // Removes the markers from the map, but keeps them in the array.
+            function clearMarkers() {
+                setMapOnAll(null);
+            }
+
+            // Shows any markers currently in the array.
+            function showMarkers() {
+                setMapOnAll(map);
+            }
+
+            // Deletes all markers in the array by removing references to them.
+            function deleteMarkers() {
+                clearMarkers();
+                markers = [];
+            }
+</script>
+}
