@@ -2,7 +2,7 @@
 
 Project showing [SignalR](http://www.asp.net/signalr) capabilities being leveraged to provide collaboration between connected browser clients
 
-Try http://samplesignalrrealtime.azurewebsites.net in mutiple tabs (in IE Edge as chrome requires https for some features to work)
+Try http://samplesignalrrealtime.azurewebsites.net in mutiple tabs (in IE Edge or other browsers as chrome requires https for some features to work)
 
 Features supported for auto synchronization between connected browser clients:
 
