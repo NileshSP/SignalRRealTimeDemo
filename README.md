@@ -1,7 +1,7 @@
 # SignalRRealTimeCollaboration
 Project showing SignalR capabilities being leveraged to probide collaboration between connected browser clients
 
-Try http://www.samplesignalrrealtime.azurewebsites.net in mutiple tabs(in IE Edge as chrome reqires https for some features to work)
+Try http://samplesignalrrealtime.azurewebsites.net in mutiple tabs (in IE Edge as chrome reqires https for some features to work)
 
 Features supported for auto synchronization between connected browser clients:
 1. adding and removing google map marker pins
