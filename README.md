@@ -6,9 +6,9 @@ Try http://samplesignalrrealtime.azurewebsites.net in mutiple tabs of desktop or
 
 Features supported for auto synchronization between connected browser clients:
 
-1. adding and removing google map marker pins
+1. Adding and removing google map marker pins
 
-2. zooming levels between connected maps
+2. Zooming levels between connected maps
 
 3. Client information window overlay panel(in gradient black) is synchronized between connected clients as well
 
