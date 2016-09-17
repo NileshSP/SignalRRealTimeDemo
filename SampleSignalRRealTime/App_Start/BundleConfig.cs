@@ -15,7 +15,13 @@ namespace SampleSignalRRealTime
                         "~/Scripts/jquery.validate*"));
 
             bundles.Add(new ScriptBundle("~/bundles/jqueryui").Include(
-            "~/Scripts/jquery-ui-{version}.js"));
+                        "~/Scripts/jquery-ui-{version}.js"));
+
+            bundles.Add(new ScriptBundle("~/bundles/jquerymobile").Include(
+                        "~/Scripts/jquery.mobile-{version}.js"));
+
+            bundles.Add(new ScriptBundle("~/bundles/jqueryuitouchpunch").Include(
+                        "~/Scripts/jquery-ui-touch-punch.js"));
 
             bundles.Add(new ScriptBundle("~/bundles/jquerysignalr").Include(
                         "~/Scripts/jquery.signalR-*"));

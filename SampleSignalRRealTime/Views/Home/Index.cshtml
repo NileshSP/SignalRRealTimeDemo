@@ -168,7 +168,10 @@
                             content: 'Pin #:' + item.MarkerId + ' <br/> Created by : ' + item.Username + ' <br/> <a href="#" onclick="DeleteMarkerClient(' + item.MarkerId + ')" >Delete Pin</a>'
                         });
 
-                        marker.addListener('click', function () {
+                        //marker.addEventListener('click', function () {
+                        //    infowindow.open(map, marker);
+                        //});
+                        ("click tap".split(" ")).forEach(function (e) {
                             infowindow.open(map, marker);
                         });
 
@@ -231,11 +234,14 @@
                     mapTypeControl: false
                 });
 
-                // This event listener will call addMarker() when the map is clicked.
-                map.addListener('click', function (event) {
-                    addMarkerClient(event.latLng.lat(), event.latLng.lng());
-
+                // This event listener will call addMarkerClient() when the map is clicked.
+                ("click tap taphold".split(" ")).forEach(function (e) {
+                    //console.log(e);
+                    map.addListener(e, function (event) {
+                        addMarkerClient(event.latLng.lat(), event.latLng.lng());
+                    });
                 });
+
 
                 map.addListener('zoom_changed', function () {
                     currZoom = map.getZoom();
