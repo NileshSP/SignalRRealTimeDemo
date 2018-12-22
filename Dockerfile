@@ -1,3 +1,5 @@
+FROM microsoft/aspnet:4.7.2-sdk AS build
+WORKDIR /app
 
 COPY *.sln .
 COPY SampleSignalRRealTime/*.csproj ./SampleSignalRRealTime/
