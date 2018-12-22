@@ -1,4 +1,4 @@
-
+# copy .sln, .csproj, .config & restore nuget packages
 COPY *.sln .
 COPY SampleSignalRRealTime/*.csproj ./SampleSignalRRealTime/
 COPY SampleSignalRRealTime/*.config ./SampleSignalRRealTime/
