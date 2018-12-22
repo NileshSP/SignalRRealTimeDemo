@@ -1,5 +1,5 @@
 #.net core with sql file process
-FROM microsoft/dotnet-framework:4.5.2 AS builder
+FROM microsoft/dotnet-framework:4.7.2 AS builder
 WORKDIR /app
 
 COPY ./SampleSignalRRealTime/*.csproj ./
@@ -10,7 +10,7 @@ RUN dotnet build SampleSignalRRealTime.csproj -c Release
 
 RUN dotnet publish SampleSignalRRealTime.csproj -c Release -o out --no-restore
 
-FROM microsoft/dotnet-framework:4.5.2
+FROM microsoft/dotnet-framework:4.7.2
 WORKDIR /app
 COPY --from=builder /app/out .
 CMD ASPNETCORE_URLS=http://*:$PORT dotnet SampleSignalRRealTime.dll
