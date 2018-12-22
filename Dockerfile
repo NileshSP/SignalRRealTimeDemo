@@ -1,3 +1,5 @@
+FROM microsoft/aspnet:4.7.2 AS runtime
+
 # copy .sln, .csproj, .config & restore nuget packages
 COPY *.sln .
 COPY SampleSignalRRealTime/*.csproj ./SampleSignalRRealTime/
