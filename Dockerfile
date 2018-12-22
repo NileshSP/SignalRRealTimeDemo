@@ -1,4 +1,4 @@
-FROM microsoft/aspnet:4.7.2-sdk AS build
+FROM microsoft/aspnet:4.7.2 AS build
 WORKDIR /app
 
 COPY *.sln .
