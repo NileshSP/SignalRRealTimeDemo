@@ -1,4 +1,6 @@
-FROM microsoft/aspnet:4.7.2 AS runtime
+FROM microsoft/dotnet-framework:4.7.2-sdk AS build
+WORKDIR /app
+LABEL maintainer "Nilesh Patel"
 
 # copy .sln, .csproj, .config & restore nuget packages
 COPY *.sln .
